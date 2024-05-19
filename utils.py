@@ -153,7 +153,7 @@ def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread: fl
     if exchange == 'bybit':
         for order in orders:
             quotes.append({
-                'price': order['price'],
+                'price': order['price'] * (1 + spread),
                 'quantity': order['quantity'],
                 'order_amount': order['orderAmount'],
                 'exchange': 'bybit',
@@ -162,7 +162,7 @@ def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread: fl
     elif exchange == 'gateio':
         for order in orders:
             quotes.append({
-                'price': order['price'],
+                'price': order['price'] * (1 + spread),
                 'quantity': order['amount'],
                 'order_amount': order['order_value'],
                 'exchange': 'gateio',
