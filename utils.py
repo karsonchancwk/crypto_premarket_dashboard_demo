@@ -146,7 +146,7 @@ def get_gateio_pre_market_orderboook(token: str, side: str) -> pd.DataFrame:
         return obs
     
 
-def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread: float = 0.0):
+def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread=0):
     quotes = []
     orders = orderbook_df.to_dict(orient='records')
 
