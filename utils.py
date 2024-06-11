@@ -1,14 +1,45 @@
-import requests 
+import requests
 import pandas as pd
+
+
+def get_whales_pre_market_currencies() -> pd.DataFrame:
+    # def get_whales_pre_market_currencies() -> list[str]:
+    headers = {
+        'accept': 'application/json, text/plain, */*',
+        'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
+        'if-none-match': 'W/"5f0d-8HSEDhAaRqqgDuK6HrpWGMyHKbk"',
+        'origin': 'https://pro.whales.market',
+        'priority': 'u=1, i',
+        'referer': 'https://pro.whales.market/',
+        'sec-ch-ua': '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    }
+
+    response = requests.get(
+        'https://api-v2.whales.market/v2/tokens?take=100&page=1&type=pre_market&search=&category=pre_market&statuses[]=active&statuses[]=settling&sort_vol=desc',
+        headers=headers,)
+
+    if response.status_code != 200:
+        raise Exception('Request Error')
+
+    j = response.json()
+    # print(j)
+    return pd.DataFrame(j['data']['list'])
+    # return [curr['symbol'] for curr in j['data']['list']]
 
 
 def get_gateio_pre_market_currencies() -> pd.DataFrame:
     gateio_premarket_currencies_url = 'https://www.gate.io/apiw/v2/pre_market/currencies?type=1&page=1&limit=99'
     response = requests.get(gateio_premarket_currencies_url)
-    
+
     if response.status_code != 200:
         raise Exception('Request Error')
-       
+
     j = response.json()
     df = pd.DataFrame(j['data']['list'])
 
@@ -17,7 +48,7 @@ def get_gateio_pre_market_currencies() -> pd.DataFrame:
 
 def get_bybit_pre_market_currencies() -> pd.DataFrame:
     cookies = {
-       '_abck': 'B796D0364EFB4118DD46CE1BC906E381~0~YAAQxetGaHUqlVGPAQAAM+9Hjwua4sJdo6LUgbw1O0Gy9ugKCe/I6fxmK/bIR9Tz/vaCmXiBOewvfn1iMf8kUenelsjR498rwkFRYjIkWcq3Q7WzGClNzvrdJ7fUguDSaFqj5/7cSLhY0mqzJ2Qo4eJgh1GCmyOflUfDKXSsEVdBlsQK5tW2xrrKZPH7uxdws28CVgGCh99lahAFFf6HO3eJEvn1ywnFtDuJ2TMzpjnwqcOVtIGNDoLcQTSKOk30JZHYoSXupwBk6HE9i+QS2YGxq9ryXbdW59gEOSREBge94TvFWs3rsUmW7fwDuhOP4AQqW7ysAGN0HS2Az5Uqh1JIsVdA/hZQrhGEWb6Ff035xEpg8BWdh0mPRsti~-1~-1~-1',
+        '_abck': 'B796D0364EFB4118DD46CE1BC906E381~0~YAAQxetGaHUqlVGPAQAAM+9Hjwua4sJdo6LUgbw1O0Gy9ugKCe/I6fxmK/bIR9Tz/vaCmXiBOewvfn1iMf8kUenelsjR498rwkFRYjIkWcq3Q7WzGClNzvrdJ7fUguDSaFqj5/7cSLhY0mqzJ2Qo4eJgh1GCmyOflUfDKXSsEVdBlsQK5tW2xrrKZPH7uxdws28CVgGCh99lahAFFf6HO3eJEvn1ywnFtDuJ2TMzpjnwqcOVtIGNDoLcQTSKOk30JZHYoSXupwBk6HE9i+QS2YGxq9ryXbdW59gEOSREBge94TvFWs3rsUmW7fwDuhOP4AQqW7ysAGN0HS2Az5Uqh1JIsVdA/hZQrhGEWb6Ff035xEpg8BWdh0mPRsti~-1~-1~-1',
     }
 
     headers = {
@@ -38,15 +69,63 @@ def get_bybit_pre_market_currencies() -> pd.DataFrame:
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     }
 
-    response = requests.get('https://api2.bybit.com/spot/api/marketTrading/v1/token/tokenList', cookies=cookies, headers=headers)
-    
+    response = requests.get(
+        'https://api2.bybit.com/spot/api/marketTrading/v1/token/tokenList', cookies=cookies, headers=headers)
+
     if response.status_code != 200:
         raise Exception('Request Error')
-       
+
     j = response.json()
     df = pd.DataFrame(j['result'])
 
     return df
+
+
+def get_whales_pre_market_orderbook(token: str, side: str) -> pd.DataFrame:
+    if side != 'buy' and side != 'sell':
+        raise Exception('side should be either buy or sell')
+
+    headers = {
+        'accept': 'application/json, text/plain, */*',
+        'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
+        'if-none-match': 'W/"1eb3-hannLXcIpqHTs8gMYRF9uJAYOQE"',
+        'origin': 'https://pro.whales.market',
+        'priority': 'u=1, i',
+        'referer': 'https://pro.whales.market/',
+        'sec-ch-ua': '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    }
+
+    params = {
+        'take': '30',
+        'page': '1',
+        'type': side,
+        'full_match': '',
+        'symbol': token,
+        'status': 'open',
+        'min_price': '',
+        'max_price': '',
+        'sort_price': 'ASC',
+        'category_token': 'pre_market',
+        # 'chains': '666666',
+    }
+
+    response = requests.get(
+        'https://api-v2.whales.market/v2/offers', params=params, headers=headers)
+
+    if response.status_code != 200:
+        raise Exception('Error')
+
+    j = response.json()
+    # print(j['data'])
+    # obs =
+
+    return pd.DataFrame(j['data']['list'])
 
 
 def get_bybit_pre_market_orderbook(token: str, side: str) -> pd.DataFrame:
@@ -106,7 +185,7 @@ def get_bybit_pre_market_orderbook(token: str, side: str) -> pd.DataFrame:
     return obs
 
 
-def get_gateio_pre_market_orderboook(token: str, side: str) -> pd.DataFrame:
+def get_gateio_pre_market_orderbook(token: str, side: str) -> pd.DataFrame:
     headers = {
         'accept': 'application/json, text/plain, */*',
         'accept-language': 'en,en-US;q=0.9,zh-HK;q=0.8,zh-TW;q=0.7,zh;q=0.6',
@@ -133,7 +212,8 @@ def get_gateio_pre_market_orderboook(token: str, side: str) -> pd.DataFrame:
         'status': 'no_transaction',
     }
 
-    response = requests.get('https://www.gate.io/apiw/v2/pre_market/market_orders', params=params, headers=headers)
+    response = requests.get(
+        'https://www.gate.io/apiw/v2/pre_market/market_orders', params=params, headers=headers)
 
     if response.status_code != 200:
         raise Exception('Error')
@@ -144,28 +224,38 @@ def get_gateio_pre_market_orderboook(token: str, side: str) -> pd.DataFrame:
         data_list = j['data']['list']
         obs = pd.DataFrame(data_list)
         return obs
-    
 
-def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread=0):
+
+def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread_factor=1):
     quotes = []
     orders = orderbook_df.to_dict(orient='records')
 
     if exchange == 'bybit':
         for order in orders:
             quotes.append({
-                'price': order['price'] * (1 + spread),
+                'price': order['price'] * spread_factor,
                 'quantity': order['quantity'],
                 'order_amount': order['orderAmount'],
                 'exchange': 'bybit',
             })
         return quotes
-    elif exchange == 'gateio':
+    # elif exchange == 'gateio':
+    #     for order in orders:
+    #         quotes.append({
+    #             'price': order['price'] * spread_factor,
+    #             'quantity': order['amount'],
+    #             'order_amount': order['order_value'],
+    #             'exchange': 'gateio',
+    #         })
+    #     return quotes
+    elif exchange == 'whales':
         for order in orders:
             quotes.append({
-                'price': order['price'] * (1 + spread),
-                'quantity': order['amount'],
-                'order_amount': order['order_value'],
-                'exchange': 'gateio',
+                'price': order['price'] * spread_factor * order['ex_token__price'],
+                'quantity': order['total_amount'],
+                'order_amount': order['value'] * order['ex_token__price'],
+                'collateral_quoted_in': order['ex_token__symbol'],
+                'exchange': 'whales',
             })
         return quotes
     else:
