@@ -1,0 +1,15 @@
+Coding enhancement
+put raw price, separate show bid&ask spread,
+consider how execute
+assume tx eth 8U
+add gateio kucoin
+
+calculate profit margin
+
+Next steps
+Take how many order
+when see opportunity send tg signal
+send py execution to testnet
+release to prod
+
+write customize market-making 

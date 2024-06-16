@@ -233,10 +233,15 @@ def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread_fac
     if exchange == 'bybit':
         for order in orders:
             quotes.append({
+                'raw_price': order['price'],
                 'price': order['price'] * spread_factor,
-                'quantity': order['quantity'],
-                'order_amount': order['orderAmount'],
-                'exchange': 'bybit',
+                'qty': order['quantity'],
+                'unfilled_qty': order['quantity'],
+                # 'unfilled_order_amt': order['orderAmount'],
+                # 'order_amt': order['orderAmount'],
+                'order_amt': order['quantity'] * order['price'] * spread_factor,
+                'exch': 'bybit',
+                'spread': spread_factor-1
             })
         return quotes
     # elif exchange == 'gateio':
@@ -251,11 +256,15 @@ def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread_fac
     elif exchange == 'whales':
         for order in orders:
             quotes.append({
+                'raw_price': order['price'] * order['ex_token__price'],
                 'price': order['price'] * spread_factor * order['ex_token__price'],
-                'quantity': order['total_amount'],
-                'order_amount': order['value'] * order['ex_token__price'],
+                'qty': order['total_amount'],
+                'unfilled_qty': order['total_amount'] - order['filled_amount'],
+                'order_amt': (order['total_amount'] - order['filled_amount']) * order['price'] * spread_factor * order['ex_token__price'],
+                # 'total_order_amt': order['value'] * order['ex_token__price'],
                 'collateral_quoted_in': order['ex_token__symbol'],
-                'exchange': 'whales',
+                'exch': 'whales',
+                'spread': spread_factor-1
             })
         return quotes
     else:
