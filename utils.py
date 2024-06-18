@@ -1,5 +1,7 @@
 import requests
 import pandas as pd
+import time
+import math
 
 
 def get_whales_pre_market_currencies() -> pd.DataFrame:
@@ -237,9 +239,8 @@ def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread_fac
                 'price': order['price'] * spread_factor,
                 'qty': order['quantity'],
                 'unfilled_qty': order['quantity'],
-                # 'unfilled_order_amt': order['orderAmount'],
-                # 'order_amt': order['orderAmount'],
-                'order_amt': order['quantity'] * order['price'] * spread_factor,
+                'unfilled_order_amt': order['orderAmount'],
+                'order_amt': order['orderAmount'],
                 'exch': 'bybit',
                 'spread': spread_factor-1
             })
@@ -269,3 +270,66 @@ def convert_orderbook_tick(orderbook_df: pd.DataFrame, exchange: str, spread_fac
         return quotes
     else:
         raise ValueError('Exchange not supported.')
+
+
+def get_available_currencies() -> list[str]:
+    whales_tokens = get_whales_pre_market_currencies()
+    bybit_tokens = get_bybit_pre_market_currencies()
+
+    curr_time = time.time()
+    bybit_tokens = bybit_tokens[(bybit_tokens['tradeEndTime'] > curr_time) | (
+        bybit_tokens['tradeEndTime'] == 0)]
+
+    # common_tokens = list(set(gateio_tokens['currency'].unique().tolist()) & set(bybit_tokens['tokenName'].unique().tolist()))
+    common_tokens = list(set(whales_tokens['symbol'].unique().tolist()) & set(
+        bybit_tokens['tokenName'].unique().tolist()))
+    # print('common_tokens = ', common_tokens)
+    return common_tokens
+
+
+def fetch_network_name(token) -> str:
+    headers = {
+        'accept': 'application/json, text/plain, */*',
+        'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
+        'if-none-match': 'W/"4d2-9L+LvMdAVw215IEGIl5WjHys9Z8"',
+        'origin': 'https://pro.whales.market',
+        'priority': 'u=1, i',
+        'referer': 'https://pro.whales.market/',
+        'sec-ch-ua': '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    }
+
+    response = requests.get(
+        f'https://api-v2.whales.market/v2/tokens/detail/{token}', headers=headers)
+
+    if response.status_code != 200:
+        raise Exception('Error')
+
+    j = response.json()
+    return j['data']['network_name']
+
+
+def network_name_to_gas(network_name):
+    # Each tx cost .003005 SOL gas fee (.444 U eqv)
+    if network_name == 'Solana':
+        fetch_sol = requests.get(
+            "https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT")
+        if fetch_sol.status_code != 200:
+            raise Exception('Error')
+        return float(fetch_sol.json()['price'])*.003005
+
+    # Each tx cost .00076723ETH gas fee (2.75U eqv)
+    elif network_name == 'Ethereum':
+        fetch_eth = requests.get(
+            "https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT")
+        if fetch_eth.status_code != 200:
+            raise Exception('Error')
+        return float(fetch_eth.json()['price'])*.00076723
+
+    # ################## SEND A TG MSG for a new chain############################################!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    return 0
